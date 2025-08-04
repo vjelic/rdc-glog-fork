@@ -1,0 +1,1120 @@
+{
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "Glog.AI",
+          "organization": "Glog.AI",
+          "fullName": "Glog, Making software more secure",
+          "version": "1.0.0",
+          "semanticVersion": "1.0.0",
+          "informationUri": "https://www.glog.ai",
+          "rules": [
+            {
+              "id": "glog-04982721-9968-47a5-babc-ef08788d1a2f",
+              "help": {
+                "text": "",
+                "markdown": "### Description\n\nThe \"Detected Issue with C Function (memcpy)\" vulnerability in C++ arises when the `memcpy` function is used improperly, potentially leading to buffer overflows. This occurs when the size of the data being copied exceeds the size of the destination buffer, which can result in memory corruption, crashes, or security vulnerabilities such as arbitrary code execution.\n\n### General Mitigation Advice\n\n1. **Validate Input Sizes**: Always ensure that the size of the data being copied does not exceed the size of the destination buffer.\n2. **Use Safer Alternatives**: Consider using safer functions like `memmove` or `std::copy` from the C++ Standard Library, which provide better safety checks.\n3. **Static Analysis Tools**: Utilize static analysis tools to detect potential buffer overflows in your code.\n4. **Boundary Checks**: Implement boundary checks to ensure that buffer sizes are respected.\n\n### Source Code Fix Recommendation\n\n```cpp\n#include <cstring> // Required for memcpy\n#include <algorithm> // Required for std::min\n\nvoid safeMemcpy(char* dst, const char* src, size_t dstSize, size_t srcSize) {\n    // Ensure that we do not copy more than the destination can hold\n    size_t sizeToCopy = std::min(dstSize, srcSize);\n    memcpy(dst, src, sizeToCopy);\n}\n```\n\n### Library Dependencies\n\n- `<cstring>`: Required for the `memcpy` function.\n- `<algorithm>`: Required for the `std::min` function to safely determine the number of bytes to copy.\n\n### Relevant Links\n\n- [OWASP Top Ten](https://owasp.org/www-project-top-ten/)\n- [OWASP Buffer Overflow](https://owasp.org/www-community/vulnerabilities/Buffer_Overflow)\n- [CWE-120: Buffer Copy without Checking Size of Input ('Classic Buffer Overflow')](https://cwe.mitre.org/data/definitions/120.html)"
+              },
+              "properties": {
+                "tags": [
+                  "DS121708"
+                ]
+              }
+            },
+            {
+              "id": "glog-d34ca950-dd07-44c8-82c1-c95b297b51cc",
+              "help": {
+                "text": "",
+                "markdown": "## Description\n\nThe `memcpy` function in C++ is used to copy a block of memory from one location to another. This function is vulnerable to buffer overflow attacks if the size of the data being copied is larger than the size of the destination buffer. In the provided code snippet, if `arg_size` is larger than the size of `bs->kern_arg_address`, it can lead to a buffer overflow.\n\nBuffer overflow vulnerabilities can lead to various security issues such as data corruption, crashes, and code execution. An attacker could exploit this vulnerability to execute arbitrary code in the context of the application.\n\n## Mitigation Advice\n\nTo mitigate this vulnerability, you should always ensure that the destination buffer is large enough to hold the data being copied. This can be done by checking the size of the data and the size of the buffer before calling `memcpy`.\n\nAdditionally, consider using safer alternatives to `memcpy` such as `strncpy` or `memcpy_s` which include a length parameter to prevent buffer overflows.\n\n## Source Code Fix Recommendation\n\nHere is a simple fix for the provided code snippet:\n\n```cpp\nif (arg_size <= sizeof(bs->kern_arg_address)) {\n    memcpy(bs->kern_arg_address, args, arg_size);\n} else {\n    // Handle error\n}\n```\n\nIn this code, we check if `arg_size` is less than or equal to the size of `bs->kern_arg_address` before calling `memcpy`. If `arg_size` is larger, we handle the error appropriately.\n\n## Library Dependencies\n\nThe `memcpy` function is part of the C Standard Library, so no additional libraries are required for the provided code snippet.\n\n## OWASP Resources\n\n- [Buffer Overflow](https://owasp.org/www-community/vulnerabilities/Buffer_Overflow)\n- [CWE-120: Buffer Copy without Checking Size of Input ('Classic Buffer Overflow')](https://cwe.mitre.org/data/definitions/120.html)\n\nPlease note that the links provided are valid and active at the time of writing this report."
+              },
+              "properties": {
+                "tags": [
+                  "DS121708"
+                ]
+              }
+            },
+            {
+              "id": "glog-1b6f33ce-b777-45d1-8905-74c4a1f9c418",
+              "help": {
+                "text": "",
+                "markdown": "## Description\n\nThe `malloc` function in C++ is used to dynamically allocate memory at runtime. However, it can be a source of vulnerabilities if not used properly. If the `max_alloc_size` is user-controlled or can be manipulated to be an extremely large value, it can lead to a Denial of Service (DoS) attack by exhausting the system's memory. This is known as an Integer Overflow or Wraparound vulnerability.\n\n## Mitigation Advice\n\nTo mitigate this vulnerability, you should:\n\n1. Always validate and sanitize user input. Never trust user input blindly.\n2. Implement checks to ensure that the size argument passed to `malloc` is not excessively large.\n3. Use functions that limit the amount of memory that can be allocated, such as `malloc_s`.\n\n## Source Code Fix Recommendation\n\nHere is a simple fix for the vulnerability:\n\n```cpp\n#include <stdlib.h>\n\nif (max_alloc_size > MAX_ALLOWED_SIZE) {\n    // Handle error\n} else {\n    void* ptr = malloc(max_alloc_size);\n    if (ptr == NULL) {\n        // Handle error\n    }\n}\n```\n\nIn this code, `MAX_ALLOWED_SIZE` is a predefined constant that represents the maximum amount of memory that can be safely allocated.\n\n## Library Dependencies\n\nThe code example requires the `stdlib.h` library to execute properly.\n\n## References\n\n- [OWASP Secure Coding Practices](https://owasp.org/www-project-secure-coding-practices-quick-reference-guide/)\n- [CWE-190: Integer Overflow or Wraparound](https://cwe.mitre.org/data/definitions/190.html)"
+              },
+              "properties": {
+                "tags": [
+                  "DS161085"
+                ]
+              }
+            },
+            {
+              "id": "glog-ce0fa7ae-b231-4f74-8c31-3de669cc1d82",
+              "help": {
+                "text": "",
+                "markdown": "### Description\n\nLeaving debug code in production environments is a common vulnerability in C++ programming. Debug code often includes verbose logging, assertions, or test hooks that are useful during development but can expose sensitive information, degrade performance, or introduce security risks when left in production. Specifically, debug code might inadvertently expose internal logic or data structures, making it easier for attackers to exploit the system.\n\n### General Mitigation Advice\n\n1. **Code Review**: Conduct thorough code reviews to identify and remove debug code before deploying to production.\n2. **Conditional Compilation**: Use preprocessor directives to include debug code only in non-production builds.\n3. **Logging Levels**: Implement logging levels to control the verbosity of logs in production.\n4. **Automated Tools**: Use static analysis tools to detect and flag debug code.\n\n### Source Code Fix Recommendation\n\n#### Vulnerability Sink: `localhost`\n\nIn this example, debug code is used to bind a server to `localhost` for testing purposes. This should be removed or conditionally compiled out in production.\n\n```cpp\n#include <iostream>\n#include <boost/asio.hpp>\n\nint main() {\n    try {\n        boost::asio::io_context io_context;\n\n        // Debug code: Bind to localhost for testing\n        #ifdef DEBUG\n        boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::address::from_string(\"127.0.0.1\"), 8080);\n        #else\n        // Production code: Bind to all interfaces\n        boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::tcp::v4(), 8080);\n        #endif\n\n        boost::asio::ip::tcp::acceptor acceptor(io_context, endpoint);\n        std::cout << \"Server is running...\" << std::endl;\n        acceptor.listen();\n    } catch (std::exception& e) {\n        std::cerr << \"Exception: \" << e.what() << std::endl;\n    }\n\n    return 0;\n}\n```\n\n### Library Dependencies\n\n- Boost.Asio: A cross-platform C++ library for network and low-level I/O programming.\n\n### OWASP Resources\n\n- [OWASP Secure Coding Practices](https://owasp.org/www-project-secure-coding-practices-quick-reference-guide/)\n- [OWASP Top Ten](https://owasp.org/www-project-top-ten/)\n\n### Common Weakness Enumeration (CWE)\n\n- [CWE-489: Leftover Debug Code](https://cwe.mitre.org/data/definitions/489.html)"
+              },
+              "properties": {
+                "tags": [
+                  "DS162092"
+                ]
+              }
+            },
+            {
+              "id": "glog-3ee04a7d-756f-4909-8e8b-69ad80bad490",
+              "help": {
+                "text": "",
+                "markdown": "## Description\n\nThe `memcpy` function in C++ is used to copy a block of memory from one location to another. This function does not check for the size of the destination buffer, which can lead to buffer overflow if the source is larger than the destination. This is a common vulnerability in C++ programming that can lead to serious security issues such as code execution, denial of service, or information disclosure.\n\nIn the provided code snippet, the `memcpy` function is copying the content of `asic_info.market_name` into `value->value.str` without checking if the size of `asic_info.market_name` is larger than the size of `value->value.str`. This can lead to a buffer overflow vulnerability.\n\n## Mitigation Advice\n\nTo mitigate this vulnerability, you should always ensure that the destination buffer is large enough to hold the data being copied. This can be done by checking the size of the source and destination before using `memcpy`. If the source is larger than the destination, you should not proceed with the copy operation.\n\n## Source Code Fix Recommendation\n\nHere is a recommended fix for the provided code snippet:\n\n```cpp\nif (sizeof(asic_info.market_name) <= sizeof(value->value.str)) {\n    memcpy(value->value.str, asic_info.market_name, sizeof(asic_info.market_name));\n} else {\n    // Handle the error, e.g., by logging it or throwing an exception\n}\n```\n\n## Library Dependencies\n\nThe `memcpy` function is part of the C Standard Library, so you need to include the `cstring` header:\n\n```cpp\n#include <cstring>\n```\n\n## References\n\n- [OWASP C++ Secure Coding Practices](https://cheatsheetseries.owasp.org/cheatsheets/C-Based_Toolchain_Hardening_Cheat_Sheet.html)\n- [Common Weakness Enumeration (CWE-120)](https://cwe.mitre.org/data/definitions/120.html)\n\nPlease note that the links provided are valid and active for anonymous users at the time of writing this report."
+              },
+              "properties": {
+                "tags": [
+                  "DS121708"
+                ]
+              }
+            },
+            {
+              "id": "glog-a2d5ed43-777a-40ae-b363-42ccee69c386",
+              "help": {
+                "text": "",
+                "markdown": "### Description\n\nLeaving debug code in production environments is a common vulnerability in C++ programming. Debug code often includes verbose logging, assertions, or test hooks that are useful during development but can expose sensitive information, degrade performance, or introduce security risks when left in production. Specifically, debug code might inadvertently expose internal logic or data structures, making it easier for attackers to exploit the system.\n\n### General Mitigation Advice\n\n1. **Code Review**: Conduct thorough code reviews to identify and remove debug code before deploying to production.\n2. **Conditional Compilation**: Use preprocessor directives to include debug code only in non-production builds.\n3. **Logging Levels**: Implement logging levels to control the verbosity of logs in production.\n4. **Automated Tools**: Use static analysis tools to detect and flag debug code.\n\n### Source Code Fix Recommendation\n\n#### Vulnerability Sink: `localhost`\n\nIn this example, debug code is used to bind a server to `localhost` for testing purposes. This should be removed or conditionally compiled out in production.\n\n```cpp\n#include <iostream>\n#include <boost/asio.hpp>\n\nint main() {\n    try {\n        boost::asio::io_context io_context;\n\n        // Debug code: Bind to localhost for testing\n        #ifdef DEBUG\n        boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::address::from_string(\"127.0.0.1\"), 8080);\n        #else\n        // Production code: Bind to all interfaces\n        boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::tcp::v4(), 8080);\n        #endif\n\n        boost::asio::ip::tcp::acceptor acceptor(io_context, endpoint);\n        std::cout << \"Server is running...\" << std::endl;\n        acceptor.listen();\n    } catch (std::exception& e) {\n        std::cerr << \"Exception: \" << e.what() << std::endl;\n    }\n\n    return 0;\n}\n```\n\n### Library Dependencies\n\n- Boost.Asio: A cross-platform C++ library for network and low-level I/O programming.\n\n### OWASP Resources\n\n- [OWASP Secure Coding Practices](https://owasp.org/www-project-secure-coding-practices-quick-reference-guide/)\n- [OWASP Top Ten](https://owasp.org/www-project-top-ten/)\n\n### Common Weakness Enumeration (CWE)\n\n- [CWE-489: Leftover Debug Code](https://cwe.mitre.org/data/definitions/489.html)"
+              },
+              "properties": {
+                "tags": [
+                  "DS162092"
+                ]
+              }
+            },
+            {
+              "id": "glog-c6e6a753-c2b0-4c6e-963c-2399505a5747",
+              "help": {
+                "text": "",
+                "markdown": "### Description\n\nThe \"Avoid Leaving Debug Code in Production\" vulnerability in C++ arises when developers inadvertently leave debugging code, such as logging, assertions, or test hooks, in the production environment. This can lead to several issues, including performance degradation, information leakage, and unintended behavior. Debug code is typically meant for development and testing purposes and should be removed or disabled in production builds.\n\n### General Mitigation Advice\n\n1. **Code Review**: Conduct thorough code reviews to ensure that debug code is not present in production.\n2. **Build Configurations**: Use different build configurations for development and production. Ensure that debug code is only included in development builds.\n3. **Conditional Compilation**: Use preprocessor directives to include debug code only in non-production builds.\n4. **Automated Tools**: Utilize static analysis tools to detect and flag debug code in the codebase.\n\n### Source Code Fix Recommendation\n\nTo address the specific vulnerability sink `127.0.0.1`, ensure that any debug code related to network operations, such as connecting to localhost for testing, is removed or conditionally compiled out in production builds.\n\n#### Example Code\n\n```cpp\n#include <iostream>\n#include <string>\n\n// Library dependencies\n#include <boost/asio.hpp>\n\nint main() {\n    // Debug code: connecting to localhost\n#ifdef DEBUG\n    std::string debug_ip = \"127.0.0.1\";\n    std::cout << \"Connecting to debug IP: \" << debug_ip << std::endl;\n    // Simulate network operation\n    boost::asio::io_context io_context;\n    boost::asio::ip::tcp::resolver resolver(io_context);\n    boost::asio::ip::tcp::resolver::query query(debug_ip, \"80\");\n    boost::asio::ip::tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);\n    // ... additional debug operations\n#endif\n\n    // Production code\n    std::cout << \"Running production code...\" << std::endl;\n    // ... production operations\n\n    return 0;\n}\n```\n\n### Library Dependencies\n\n- `boost/asio.hpp`: This library is required for network operations in the example code. Ensure that Boost is properly installed and linked in your project.\n\n### Relevant Links\n\n- [CWE-489: Leftover Debug Code](https://cwe.mitre.org/data/definitions/489.html)"
+              },
+              "properties": {
+                "tags": [
+                  "DS162092"
+                ]
+              }
+            },
+            {
+              "id": "glog-4baa2ffb-dac4-4b6a-a2e0-c4c1b96d3c01",
+              "help": {
+                "text": "",
+                "markdown": "### Description\n\nLeaving debug code in production environments is a common vulnerability in C++ programming. Debug code often includes verbose logging, assertions, or test hooks that are useful during development but can expose sensitive information, degrade performance, or introduce security risks when left in production. Specifically, debug code might inadvertently expose internal logic or data structures, making it easier for attackers to exploit the system.\n\n### General Mitigation Advice\n\n1. **Code Review**: Conduct thorough code reviews to identify and remove debug code before deploying to production.\n2. **Conditional Compilation**: Use preprocessor directives to include debug code only in non-production builds.\n3. **Logging Levels**: Implement logging levels to control the verbosity of logs in production.\n4. **Automated Tools**: Use static analysis tools to detect and flag debug code.\n\n### Source Code Fix Recommendation\n\n#### Vulnerability Sink: `localhost`\n\nIn this example, debug code is used to bind a server to `localhost` for testing purposes. This should be removed or conditionally compiled out in production.\n\n```cpp\n#include <iostream>\n#include <boost/asio.hpp>\n\nint main() {\n    try {\n        boost::asio::io_context io_context;\n\n        // Debug code: Bind to localhost for testing\n        #ifdef DEBUG\n        boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::address::from_string(\"127.0.0.1\"), 8080);\n        #else\n        // Production code: Bind to all interfaces\n        boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::tcp::v4(), 8080);\n        #endif\n\n        boost::asio::ip::tcp::acceptor acceptor(io_context, endpoint);\n        std::cout << \"Server is running...\" << std::endl;\n        acceptor.listen();\n    } catch (std::exception& e) {\n        std::cerr << \"Exception: \" << e.what() << std::endl;\n    }\n\n    return 0;\n}\n```\n\n### Library Dependencies\n\n- Boost.Asio: A cross-platform C++ library for network and low-level I/O programming.\n\n### OWASP Resources\n\n- [OWASP Secure Coding Practices](https://owasp.org/www-project-secure-coding-practices-quick-reference-guide/)\n- [OWASP Top Ten](https://owasp.org/www-project-top-ten/)\n\n### Common Weakness Enumeration (CWE)\n\n- [CWE-489: Leftover Debug Code](https://cwe.mitre.org/data/definitions/489.html)"
+              },
+              "properties": {
+                "tags": [
+                  "DS162092"
+                ]
+              }
+            },
+            {
+              "id": "glog-cea8abf1-b004-4b5d-afde-735cdf5f3278",
+              "help": {
+                "text": "",
+                "markdown": "## Description\n\nThe `memcpy` function in C++ is used to copy a block of memory from one location to another. This function does not check for the size of the destination buffer, which can lead to buffer overflow if the source is larger than the destination. This is a common vulnerability in C++ programming that can lead to serious security issues such as code execution, denial of service, or information disclosure.\n\nIn the provided code snippet, the `memcpy` function is used to copy the `asic_serial` from `asic_info` to `value->value.str`. If the size of `asic_serial` is larger than `value->value.str`, it can cause a buffer overflow.\n\n## Mitigation Advice\n\nTo mitigate this vulnerability, you should always ensure that the destination buffer is large enough to hold the data being copied. This can be done by checking the size of the source and destination before using `memcpy`.\n\nAdditionally, consider using safer functions that include buffer size checks, such as `strncpy` or `memcpy_s` (in C11), instead of `memcpy`.\n\n## Source Code Fix Recommendation\n\nReplace the `memcpy` function with `strncpy`:\n\n```cpp\nstrncpy(value->value.str, asic_info.asic_serial, sizeof(value->value.str));\nvalue->value.str[sizeof(value->value.str) - 1] = '\\0'; // Ensure null termination\n```\n\n## Library Dependencies\n\nThe code example requires the following library to execute properly:\n\n- `cstring` or `string.h` for `memcpy` or `strncpy` function\n\n## References\n\n- [OWASP C++ Secure Coding Practices](https://cheatsheetseries.owasp.org/cheatsheets/C-Based_Toolchain_Hardening_Cheat_Sheet.html)\n- [Common Weakness Enumeration (CWE-120)](https://cwe.mitre.org/data/definitions/120.html)\n\nPlease note that the links provided are active and accessible to anonymous users at the time of writing this report."
+              },
+              "properties": {
+                "tags": [
+                  "DS121708"
+                ]
+              }
+            },
+            {
+              "id": "glog-06f1177b-bc98-4f58-9624-755c0c2d930d",
+              "help": {
+                "text": "",
+                "markdown": "### Description\n\nThe \"Avoid Leaving Debug Code in Production\" vulnerability in C++ arises when developers inadvertently leave debugging code, such as logging, assertions, or test hooks, in the production environment. This can lead to several issues, including performance degradation, information leakage, and unintended behavior. Debug code is typically meant for development and testing purposes and should be removed or disabled in production builds.\n\n### General Mitigation Advice\n\n1. **Code Review**: Conduct thorough code reviews to ensure that debug code is not present in production.\n2. **Build Configurations**: Use different build configurations for development and production. Ensure that debug code is only included in development builds.\n3. **Conditional Compilation**: Use preprocessor directives to include debug code only in non-production builds.\n4. **Automated Tools**: Utilize static analysis tools to detect and flag debug code in the codebase.\n\n### Source Code Fix Recommendation\n\nTo address the specific vulnerability sink `127.0.0.1`, ensure that any debug code related to network operations, such as connecting to localhost for testing, is removed or conditionally compiled out in production builds.\n\n#### Example Code\n\n```cpp\n#include <iostream>\n#include <string>\n\n// Library dependencies\n#include <boost/asio.hpp>\n\nint main() {\n    // Debug code: connecting to localhost\n#ifdef DEBUG\n    std::string debug_ip = \"127.0.0.1\";\n    std::cout << \"Connecting to debug IP: \" << debug_ip << std::endl;\n    // Simulate network operation\n    boost::asio::io_context io_context;\n    boost::asio::ip::tcp::resolver resolver(io_context);\n    boost::asio::ip::tcp::resolver::query query(debug_ip, \"80\");\n    boost::asio::ip::tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);\n    // ... additional debug operations\n#endif\n\n    // Production code\n    std::cout << \"Running production code...\" << std::endl;\n    // ... production operations\n\n    return 0;\n}\n```\n\n### Library Dependencies\n\n- `boost/asio.hpp`: This library is required for network operations in the example code. Ensure that Boost is properly installed and linked in your project.\n\n### Relevant Links\n\n- [CWE-489: Leftover Debug Code](https://cwe.mitre.org/data/definitions/489.html)"
+              },
+              "properties": {
+                "tags": [
+                  "DS162092"
+                ]
+              }
+            },
+            {
+              "id": "glog-cb5c693a-3204-4ce6-a3e8-6fe5432dcf6b",
+              "help": {
+                "text": "",
+                "markdown": "## Description\n\nThe `strlen()` function in C++ is used to find the length of a string. However, it can lead to vulnerabilities if not used properly. The function counts the number of characters in a string until it reaches a null character (`\\0`). If the string is not null-terminated, `strlen()` will continue reading memory until it encounters a null character, which can lead to buffer overflows, memory corruption, and other unexpected behavior.\n\nIn the provided code snippet, `strlen(gpu_result.gpu_result.msg)`, there is a potential vulnerability if `gpu_result.gpu_result.msg` is not null-terminated. This could lead to a buffer overflow vulnerability, which can be exploited to execute arbitrary code, crash the program, or cause other security issues.\n\n## Mitigation Advice\n\nTo mitigate this vulnerability, ensure that all strings are null-terminated before passing them to `strlen()`. Additionally, consider using safer alternatives to `strlen()`, such as `strnlen()`, which takes a maximum length parameter and will not read past this length, even if it does not encounter a null character.\n\n## Source Code Fix Recommendation\n\nHere is a recommended fix for the provided code snippet:\n\n```cpp\n// Ensure gpu_result.gpu_result.msg is null-terminated\ngpu_result.gpu_result.msg[sizeof(gpu_result.gpu_result.msg) - 1] = '\\0';\n\n// Use strnlen() instead of strlen()\nsize_t length = strnlen(gpu_result.gpu_result.msg, sizeof(gpu_result.gpu_result.msg));\n```\n\n## Library Dependencies\n\nThe `strlen()` function is part of the C standard library (`<cstring>` in C++), so this library must be included for the code to execute properly.\n\n## References\n\n- [OWASP C++ Secure Coding Practices](https://cheatsheetseries.owasp.org/cheatsheets/C-Based_Toolchain_Hardening_Cheat_Sheet.html)\n- [CWE-119: Improper Restriction of Operations within the Bounds of a Memory Buffer](https://cwe.mitre.org/data/definitions/119.html)\n\nPlease note that the links provided are accessible to anonymous users at the time of writing this report."
+              },
+              "properties": {
+                "tags": [
+                  "DS140021"
+                ]
+              }
+            },
+            {
+              "id": "glog-98453598-928c-4bfa-b733-90ac6556103c",
+              "help": {
+                "text": "",
+                "markdown": "## Description\n\nThe `strlen()` function in C++ is used to find the length of a string. However, it can lead to vulnerabilities if not used properly. The function counts the number of characters in a string until it reaches a null character (`\\0`). If the string is not null-terminated, `strlen()` will continue reading memory until it encounters a null character, which can lead to buffer overflows, memory corruption, and other unexpected behavior.\n\nIn the provided code snippet, `strlen(gpu_result.gpu_result.msg)`, there is a potential vulnerability if `gpu_result.gpu_result.msg` is not null-terminated. This could lead to a buffer overflow vulnerability, which can be exploited to execute arbitrary code, crash the program, or cause other security issues.\n\n## Mitigation Advice\n\nTo mitigate this vulnerability, ensure that all strings are null-terminated before passing them to `strlen()`. Additionally, consider using safer alternatives to `strlen()`, such as `strnlen()`, which takes a maximum length parameter and will not read past this length, even if it does not encounter a null character.\n\n## Source Code Fix Recommendation\n\nHere is a recommended fix for the provided code snippet:\n\n```cpp\n// Ensure gpu_result.gpu_result.msg is null-terminated\ngpu_result.gpu_result.msg[sizeof(gpu_result.gpu_result.msg) - 1] = '\\0';\n\n// Use strnlen() instead of strlen()\nsize_t length = strnlen(gpu_result.gpu_result.msg, sizeof(gpu_result.gpu_result.msg));\n```\n\n## Library Dependencies\n\nThe `strlen()` function is part of the C standard library (`<cstring>` in C++), so this library must be included for the code to execute properly.\n\n## References\n\n- [OWASP C++ Secure Coding Practices](https://cheatsheetseries.owasp.org/cheatsheets/C-Based_Toolchain_Hardening_Cheat_Sheet.html)\n- [CWE-119: Improper Restriction of Operations within the Bounds of a Memory Buffer](https://cwe.mitre.org/data/definitions/119.html)\n\nPlease note that the links provided are accessible to anonymous users at the time of writing this report."
+              },
+              "properties": {
+                "tags": [
+                  "DS140021"
+                ]
+              }
+            },
+            {
+              "id": "glog-324d7040-96f4-479a-8c61-0b44891258ca",
+              "help": {
+                "text": "",
+                "markdown": "### Description\n\nThe \"Avoid Leaving Debug Code in Production\" vulnerability in C++ arises when developers inadvertently leave debugging code, such as logging, assertions, or test hooks, in the production environment. This can lead to several issues, including performance degradation, information leakage, and unintended behavior. Debug code is typically meant for development and testing purposes and should be removed or disabled in production builds.\n\n### General Mitigation Advice\n\n1. **Code Review**: Conduct thorough code reviews to ensure that debug code is not present in production.\n2. **Build Configurations**: Use different build configurations for development and production. Ensure that debug code is only included in development builds.\n3. **Conditional Compilation**: Use preprocessor directives to include debug code only in non-production builds.\n4. **Automated Tools**: Utilize static analysis tools to detect and flag debug code in the codebase.\n\n### Source Code Fix Recommendation\n\nTo address the specific vulnerability sink `127.0.0.1`, ensure that any debug code related to network operations, such as connecting to localhost for testing, is removed or conditionally compiled out in production builds.\n\n#### Example Code\n\n```cpp\n#include <iostream>\n#include <string>\n\n// Library dependencies\n#include <boost/asio.hpp>\n\nint main() {\n    // Debug code: connecting to localhost\n#ifdef DEBUG\n    std::string debug_ip = \"127.0.0.1\";\n    std::cout << \"Connecting to debug IP: \" << debug_ip << std::endl;\n    // Simulate network operation\n    boost::asio::io_context io_context;\n    boost::asio::ip::tcp::resolver resolver(io_context);\n    boost::asio::ip::tcp::resolver::query query(debug_ip, \"80\");\n    boost::asio::ip::tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);\n    // ... additional debug operations\n#endif\n\n    // Production code\n    std::cout << \"Running production code...\" << std::endl;\n    // ... production operations\n\n    return 0;\n}\n```\n\n### Library Dependencies\n\n- `boost/asio.hpp`: This library is required for network operations in the example code. Ensure that Boost is properly installed and linked in your project.\n\n### Relevant Links\n\n- [CWE-489: Leftover Debug Code](https://cwe.mitre.org/data/definitions/489.html)"
+              },
+              "properties": {
+                "tags": [
+                  "DS162092"
+                ]
+              }
+            },
+            {
+              "id": "glog-7967934a-ee3c-461f-952b-f35823656afc",
+              "help": {
+                "text": "",
+                "markdown": "### Description\n\nLeaving debug code in production environments is a common vulnerability in C++ programming. Debug code often includes verbose logging, assertions, or test hooks that are useful during development but can expose sensitive information, degrade performance, or introduce security risks when left in production. Specifically, debug code might inadvertently expose internal logic or data structures, making it easier for attackers to exploit the system.\n\n### General Mitigation Advice\n\n1. **Code Review**: Conduct thorough code reviews to identify and remove debug code before deploying to production.\n2. **Conditional Compilation**: Use preprocessor directives to include debug code only in non-production builds.\n3. **Logging Levels**: Implement logging levels to control the verbosity of logs in production.\n4. **Automated Tools**: Use static analysis tools to detect and flag debug code.\n\n### Source Code Fix Recommendation\n\n#### Vulnerability Sink: `localhost`\n\nIn this example, debug code is used to bind a server to `localhost` for testing purposes. This should be removed or conditionally compiled out in production.\n\n```cpp\n#include <iostream>\n#include <boost/asio.hpp>\n\nint main() {\n    try {\n        boost::asio::io_context io_context;\n\n        // Debug code: Bind to localhost for testing\n        #ifdef DEBUG\n        boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::address::from_string(\"127.0.0.1\"), 8080);\n        #else\n        // Production code: Bind to all interfaces\n        boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::tcp::v4(), 8080);\n        #endif\n\n        boost::asio::ip::tcp::acceptor acceptor(io_context, endpoint);\n        std::cout << \"Server is running...\" << std::endl;\n        acceptor.listen();\n    } catch (std::exception& e) {\n        std::cerr << \"Exception: \" << e.what() << std::endl;\n    }\n\n    return 0;\n}\n```\n\n### Library Dependencies\n\n- Boost.Asio: A cross-platform C++ library for network and low-level I/O programming.\n\n### OWASP Resources\n\n- [OWASP Secure Coding Practices](https://owasp.org/www-project-secure-coding-practices-quick-reference-guide/)\n- [OWASP Top Ten](https://owasp.org/www-project-top-ten/)\n\n### Common Weakness Enumeration (CWE)\n\n- [CWE-489: Leftover Debug Code](https://cwe.mitre.org/data/definitions/489.html)"
+              },
+              "properties": {
+                "tags": [
+                  "DS162092"
+                ]
+              }
+            },
+            {
+              "id": "glog-011c070e-b3bc-4451-b997-5ba739771190",
+              "help": {
+                "text": "",
+                "markdown": "### Description\n\nLeaving debug code in production environments is a common vulnerability in C++ programming. Debug code often includes verbose logging, assertions, or test hooks that are useful during development but can expose sensitive information, degrade performance, or introduce security risks when left in production. Specifically, debug code might inadvertently expose internal logic or data structures, making it easier for attackers to exploit the system.\n\n### General Mitigation Advice\n\n1. **Code Review**: Conduct thorough code reviews to identify and remove debug code before deploying to production.\n2. **Conditional Compilation**: Use preprocessor directives to include debug code only in non-production builds.\n3. **Logging Levels**: Implement logging levels to control the verbosity of logs in production.\n4. **Automated Tools**: Use static analysis tools to detect and flag debug code.\n\n### Source Code Fix Recommendation\n\n#### Vulnerability Sink: `localhost`\n\nIn this example, debug code is used to bind a server to `localhost` for testing purposes. This should be removed or conditionally compiled out in production.\n\n```cpp\n#include <iostream>\n#include <boost/asio.hpp>\n\nint main() {\n    try {\n        boost::asio::io_context io_context;\n\n        // Debug code: Bind to localhost for testing\n        #ifdef DEBUG\n        boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::address::from_string(\"127.0.0.1\"), 8080);\n        #else\n        // Production code: Bind to all interfaces\n        boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::tcp::v4(), 8080);\n        #endif\n\n        boost::asio::ip::tcp::acceptor acceptor(io_context, endpoint);\n        std::cout << \"Server is running...\" << std::endl;\n        acceptor.listen();\n    } catch (std::exception& e) {\n        std::cerr << \"Exception: \" << e.what() << std::endl;\n    }\n\n    return 0;\n}\n```\n\n### Library Dependencies\n\n- Boost.Asio: A cross-platform C++ library for network and low-level I/O programming.\n\n### OWASP Resources\n\n- [OWASP Secure Coding Practices](https://owasp.org/www-project-secure-coding-practices-quick-reference-guide/)\n- [OWASP Top Ten](https://owasp.org/www-project-top-ten/)\n\n### Common Weakness Enumeration (CWE)\n\n- [CWE-489: Leftover Debug Code](https://cwe.mitre.org/data/definitions/489.html)"
+              },
+              "properties": {
+                "tags": [
+                  "DS162092"
+                ]
+              }
+            },
+            {
+              "id": "glog-74fd2158-5ef6-4b89-8640-a019f3c16a6b",
+              "help": {
+                "text": "",
+                "markdown": "### Description\n\nThe \"Avoid Leaving Debug Code in Production\" vulnerability in C++ arises when developers inadvertently leave debugging code, such as logging, assertions, or test hooks, in the production environment. This can lead to several issues, including performance degradation, information leakage, and unintended behavior. Debug code is typically meant for development and testing purposes and should be removed or disabled in production builds.\n\n### General Mitigation Advice\n\n1. **Code Review**: Conduct thorough code reviews to ensure that debug code is not present in production.\n2. **Build Configurations**: Use different build configurations for development and production. Ensure that debug code is only included in development builds.\n3. **Conditional Compilation**: Use preprocessor directives to include debug code only in non-production builds.\n4. **Automated Tools**: Utilize static analysis tools to detect and flag debug code in the codebase.\n\n### Source Code Fix Recommendation\n\nTo address the specific vulnerability sink `127.0.0.1`, ensure that any debug code related to network operations, such as connecting to localhost for testing, is removed or conditionally compiled out in production builds.\n\n#### Example Code\n\n```cpp\n#include <iostream>\n#include <string>\n\n// Library dependencies\n#include <boost/asio.hpp>\n\nint main() {\n    // Debug code: connecting to localhost\n#ifdef DEBUG\n    std::string debug_ip = \"127.0.0.1\";\n    std::cout << \"Connecting to debug IP: \" << debug_ip << std::endl;\n    // Simulate network operation\n    boost::asio::io_context io_context;\n    boost::asio::ip::tcp::resolver resolver(io_context);\n    boost::asio::ip::tcp::resolver::query query(debug_ip, \"80\");\n    boost::asio::ip::tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);\n    // ... additional debug operations\n#endif\n\n    // Production code\n    std::cout << \"Running production code...\" << std::endl;\n    // ... production operations\n\n    return 0;\n}\n```\n\n### Library Dependencies\n\n- `boost/asio.hpp`: This library is required for network operations in the example code. Ensure that Boost is properly installed and linked in your project.\n\n### Relevant Links\n\n- [CWE-489: Leftover Debug Code](https://cwe.mitre.org/data/definitions/489.html)"
+              },
+              "properties": {
+                "tags": [
+                  "DS162092"
+                ]
+              }
+            },
+            {
+              "id": "glog-8c175b13-e750-4d68-a2fa-bf8ac85883d8",
+              "help": {
+                "text": "",
+                "markdown": "## Description\n\nThe `strncpy` function in C++ is used to copy a string from source to destination. However, it can lead to vulnerabilities if not used properly. The function does not automatically append a null character at the end of the destination string. If the source string is longer than the destination buffer, the destination string will not be null-terminated, which can lead to buffer overflow vulnerabilities.\n\n## Mitigation Advice\n\nTo mitigate this vulnerability, it is recommended to use safer string handling functions that automatically handle null termination and buffer sizes, such as `strlcpy` or `strncpy_s`. If these are not available, you should manually ensure that the destination string is null-terminated.\n\n## Source Code Fix Recommendation\n\nHere is a recommended fix for the code:\n\n```cpp\n#include <cstring>\n\n// ...\n\nchar dest[MAX_SIZE];\nconst char* src = \"source string\";\nsize_t n = sizeof(dest);\n\nstrncpy(dest, src, n - 1);\ndest[n - 1] = '\\0';  // Ensure null termination\n```\n\n## Library Dependencies\n\nThe code example requires the `<cstring>` library.\n\n## References\n\n- [OWASP C++ Secure Coding Practices](https://cheatsheetseries.owasp.org/cheatsheets/C-Based_Toolchain_Hardening_Cheat_Sheet.html)\n- [CWE-120: Buffer Copy without Checking Size of Input ('Classic Buffer Overflow')](https://cwe.mitre.org/data/definitions/120.html)\n\nPlease note that the links provided are accessible to anonymous users at the time of writing this report."
+              },
+              "properties": {
+                "tags": [
+                  "DS111237"
+                ]
+              }
+            }
+          ],
+          "language": "en-US",
+          "contents": [
+            "localizedData",
+            "nonLocalizedData"
+          ],
+          "isComprehensive": false
+        }
+      },
+      "language": "en-US",
+      "results": [
+        {
+          "ruleId": "glog-d34ca950-dd07-44c8-82c1-c95b297b51cc",
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Detected Vulnerability in C Function (memcpy)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "rdc_libs/rdc_modules/rdc_rocr/ComputeQueueTest.cc"
+                },
+                "region": {
+                  "startLine": 373,
+                  "startColumn": 8,
+                  "endLine": 373,
+                  "endColumn": 52,
+                  "charOffset": 13916,
+                  "charLength": 44,
+                  "snippet": {
+                    "text": "memcpy(bs->kern_arg_address, args, arg_size)",
+                    "rendered": {
+                      "text": "memcpy(bs->kern_arg_address, args, arg_size)",
+                      "markdown": "`memcpy(bs->kern_arg_address, args, arg_size)`"
+                    }
+                  },
+                  "sourceLanguage": "cpp"
+                }
+              }
+            }
+          ],
+          "fixes": [
+            {
+              "description": {
+                "text": "There are a number of conditions in which memcpy can introduce a vulnerability (mismatched buffer sizes, null pointers, etc.). More secure alternitives perform additional validation of the source and destination buffer"
+              },
+              "artifactChanges": [
+                {
+                  "artifactLocation": {
+                    "uri": "rdc_libs/rdc_modules/rdc_rocr/ComputeQueueTest.cc"
+                  },
+                  "replacements": [
+                    {
+                      "deletedRegion": {
+                        "charOffset": 13916,
+                        "charLength": 44
+                      },
+                      "insertedContent": {
+                        "text": "memcpy_s(bs->kern_arg_address, <size of bs->kern_arg_address>,  args,  arg_size)"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "properties": {
+            "DevSkimSeverity": "BestPractice",
+            "DevSkimConfidence": "High",
+            "tags": [
+              "API.DangerousAPI.ProblematicFunction"
+            ]
+          }
+        },
+        {
+          "ruleId": "glog-04982721-9968-47a5-babc-ef08788d1a2f",
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "\"Detected Issue with C Function (memcpy)\""
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "rdc_libs/rdc_modules/rdc_rocr/common.cc"
+                },
+                "region": {
+                  "startLine": 469,
+                  "startColumn": 6,
+                  "endLine": 469,
+                  "endColumn": 28,
+                  "charOffset": 15756,
+                  "charLength": 22,
+                  "snippet": {
+                    "text": "memcpy(dst, src, size)",
+                    "rendered": {
+                      "text": "memcpy(dst, src, size)",
+                      "markdown": "`memcpy(dst, src, size)`"
+                    }
+                  },
+                  "sourceLanguage": "cpp"
+                }
+              }
+            }
+          ],
+          "fixes": [
+            {
+              "description": {
+                "text": "There are a number of conditions in which memcpy can introduce a vulnerability (mismatched buffer sizes, null pointers, etc.). More secure alternitives perform additional validation of the source and destination buffer"
+              },
+              "artifactChanges": [
+                {
+                  "artifactLocation": {
+                    "uri": "rdc_libs/rdc_modules/rdc_rocr/common.cc"
+                  },
+                  "replacements": [
+                    {
+                      "deletedRegion": {
+                        "charOffset": 15756,
+                        "charLength": 22
+                      },
+                      "insertedContent": {
+                        "text": "memcpy_s(dst, <size of dst>,  src,  size)"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "properties": {
+            "DevSkimSeverity": "BestPractice",
+            "DevSkimConfidence": "High",
+            "tags": [
+              "API.DangerousAPI.ProblematicFunction"
+            ]
+          }
+        },
+        {
+          "ruleId": "glog-ce0fa7ae-b231-4f74-8c31-3de669cc1d82",
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Avoid Leaving Debug Code in Production"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "rdci/src/RdciSubSystem.cc"
+                },
+                "region": {
+                  "startLine": 116,
+                  "startColumn": 58,
+                  "endLine": 116,
+                  "endColumn": 67,
+                  "charOffset": 4549,
+                  "charLength": 9,
+                  "snippet": {
+                    "text": "localhost",
+                    "rendered": {
+                      "text": "localhost",
+                      "markdown": "`localhost`"
+                    }
+                  },
+                  "sourceLanguage": "cpp"
+                }
+              }
+            }
+          ],
+          "properties": {
+            "DevSkimSeverity": "ManualReview",
+            "DevSkimConfidence": "High",
+            "tags": [
+              "Hygiene.Network.AccessingLocalhost"
+            ]
+          }
+        },
+        {
+          "ruleId": "glog-3ee04a7d-756f-4909-8e8b-69ad80bad490",
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Detected Vulnerability in C Function (memcpy)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "rdc_libs/rdc/src/RdcMetricFetcherImpl.cc"
+                },
+                "region": {
+                  "startLine": 829,
+                  "startColumn": 8,
+                  "endLine": 829,
+                  "endColumn": 85,
+                  "charOffset": 30086,
+                  "charLength": 77,
+                  "snippet": {
+                    "text": "memcpy(value->value.str, asic_info.market_name, sizeof(asic_info.market_name)",
+                    "rendered": {
+                      "text": "memcpy(value->value.str, asic_info.market_name, sizeof(asic_info.market_name)",
+                      "markdown": "`memcpy(value->value.str, asic_info.market_name, sizeof(asic_info.market_name)`"
+                    }
+                  },
+                  "sourceLanguage": "cpp"
+                }
+              }
+            }
+          ],
+          "fixes": [
+            {
+              "description": {
+                "text": "There are a number of conditions in which memcpy can introduce a vulnerability (mismatched buffer sizes, null pointers, etc.). More secure alternitives perform additional validation of the source and destination buffer"
+              },
+              "artifactChanges": [
+                {
+                  "artifactLocation": {
+                    "uri": "rdc_libs/rdc/src/RdcMetricFetcherImpl.cc"
+                  },
+                  "replacements": [
+                    {
+                      "deletedRegion": {
+                        "charOffset": 30086,
+                        "charLength": 77
+                      },
+                      "insertedContent": {
+                        "text": "memcpy_s(value->value.str, <size of value->value.str>,  asic_info.market_name,  sizeof(asic_info.market_name)"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "properties": {
+            "DevSkimSeverity": "BestPractice",
+            "DevSkimConfidence": "High",
+            "tags": [
+              "API.DangerousAPI.ProblematicFunction"
+            ]
+          }
+        },
+        {
+          "ruleId": "glog-a2d5ed43-777a-40ae-b363-42ccee69c386",
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Avoid Leaving Debug Code in Production"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "rdci/src/RdciSubSystem.cc"
+                },
+                "region": {
+                  "startLine": 35,
+                  "startColumn": 16,
+                  "endLine": 35,
+                  "endColumn": 25,
+                  "charOffset": 1372,
+                  "charLength": 9,
+                  "snippet": {
+                    "text": "localhost",
+                    "rendered": {
+                      "text": "localhost",
+                      "markdown": "`localhost`"
+                    }
+                  },
+                  "sourceLanguage": "cpp"
+                }
+              }
+            }
+          ],
+          "properties": {
+            "DevSkimSeverity": "ManualReview",
+            "DevSkimConfidence": "High",
+            "tags": [
+              "Hygiene.Network.AccessingLocalhost"
+            ]
+          }
+        },
+        {
+          "ruleId": "glog-c6e6a753-c2b0-4c6e-963c-2399505a5747",
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Avoid Leaving Debug Code in Production"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "example/job_stats_example.cc"
+                },
+                "region": {
+                  "startLine": 33,
+                  "startColumn": 27,
+                  "endLine": 33,
+                  "endColumn": 36,
+                  "charOffset": 1303,
+                  "charLength": 9,
+                  "snippet": {
+                    "text": "127.0.0.1",
+                    "rendered": {
+                      "text": "127.0.0.1",
+                      "markdown": "`127.0.0.1`"
+                    }
+                  },
+                  "sourceLanguage": "cpp"
+                }
+              }
+            }
+          ],
+          "properties": {
+            "DevSkimSeverity": "ManualReview",
+            "DevSkimConfidence": "High",
+            "tags": [
+              "Hygiene.Network.AccessingLocalhost"
+            ]
+          }
+        },
+        {
+          "ruleId": "glog-4baa2ffb-dac4-4b6a-a2e0-c4c1b96d3c01",
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Avoid Leaving Debug Code in Production"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "example/config_example.cc"
+                },
+                "region": {
+                  "startLine": 40,
+                  "startColumn": 27,
+                  "endLine": 40,
+                  "endColumn": 36,
+                  "charOffset": 1451,
+                  "charLength": 9,
+                  "snippet": {
+                    "text": "localhost",
+                    "rendered": {
+                      "text": "localhost",
+                      "markdown": "`localhost`"
+                    }
+                  },
+                  "sourceLanguage": "cpp"
+                }
+              }
+            }
+          ],
+          "properties": {
+            "DevSkimSeverity": "ManualReview",
+            "DevSkimConfidence": "High",
+            "tags": [
+              "Hygiene.Network.AccessingLocalhost"
+            ]
+          }
+        },
+        {
+          "ruleId": "glog-cea8abf1-b004-4b5d-afde-735cdf5f3278",
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Detected Vulnerability in C Function (memcpy)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "rdc_libs/rdc/src/RdcMetricFetcherImpl.cc"
+                },
+                "region": {
+                  "startLine": 903,
+                  "startColumn": 8,
+                  "endLine": 903,
+                  "endColumn": 85,
+                  "charOffset": 32904,
+                  "charLength": 77,
+                  "snippet": {
+                    "text": "memcpy(value->value.str, asic_info.asic_serial, sizeof(asic_info.asic_serial)",
+                    "rendered": {
+                      "text": "memcpy(value->value.str, asic_info.asic_serial, sizeof(asic_info.asic_serial)",
+                      "markdown": "`memcpy(value->value.str, asic_info.asic_serial, sizeof(asic_info.asic_serial)`"
+                    }
+                  },
+                  "sourceLanguage": "cpp"
+                }
+              }
+            }
+          ],
+          "fixes": [
+            {
+              "description": {
+                "text": "There are a number of conditions in which memcpy can introduce a vulnerability (mismatched buffer sizes, null pointers, etc.). More secure alternitives perform additional validation of the source and destination buffer"
+              },
+              "artifactChanges": [
+                {
+                  "artifactLocation": {
+                    "uri": "rdc_libs/rdc/src/RdcMetricFetcherImpl.cc"
+                  },
+                  "replacements": [
+                    {
+                      "deletedRegion": {
+                        "charOffset": 32904,
+                        "charLength": 77
+                      },
+                      "insertedContent": {
+                        "text": "memcpy_s(value->value.str, <size of value->value.str>,  asic_info.asic_serial,  sizeof(asic_info.asic_serial)"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "properties": {
+            "DevSkimSeverity": "BestPractice",
+            "DevSkimConfidence": "High",
+            "tags": [
+              "API.DangerousAPI.ProblematicFunction"
+            ]
+          }
+        },
+        {
+          "ruleId": "glog-06f1177b-bc98-4f58-9624-755c0c2d930d",
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Avoid Leaving Debug Code in Production"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "example/field_value_example.cc"
+                },
+                "region": {
+                  "startLine": 34,
+                  "startColumn": 27,
+                  "endLine": 34,
+                  "endColumn": 36,
+                  "charOffset": 1322,
+                  "charLength": 9,
+                  "snippet": {
+                    "text": "127.0.0.1",
+                    "rendered": {
+                      "text": "127.0.0.1",
+                      "markdown": "`127.0.0.1`"
+                    }
+                  },
+                  "sourceLanguage": "cpp"
+                }
+              }
+            }
+          ],
+          "properties": {
+            "DevSkimSeverity": "ManualReview",
+            "DevSkimConfidence": "High",
+            "tags": [
+              "Hygiene.Network.AccessingLocalhost"
+            ]
+          }
+        },
+        {
+          "ruleId": "glog-cb5c693a-3204-4ce6-a3e8-6fe5432dcf6b",
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Detected Vulnerability in C Function (strlen)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "example/diagnostic_example.cc"
+                },
+                "region": {
+                  "startLine": 130,
+                  "startColumn": 10,
+                  "endLine": 130,
+                  "endColumn": 43,
+                  "charOffset": 4910,
+                  "charLength": 33,
+                  "snippet": {
+                    "text": "strlen(gpu_result.gpu_result.msg)",
+                    "rendered": {
+                      "text": "strlen(gpu_result.gpu_result.msg)",
+                      "markdown": "`strlen(gpu_result.gpu_result.msg)`"
+                    }
+                  },
+                  "sourceLanguage": "cpp"
+                }
+              }
+            }
+          ],
+          "fixes": [
+            {
+              "description": {
+                "text": "If a string is missing a null terminator, strlen will read past the end of the buffer"
+              },
+              "artifactChanges": [
+                {
+                  "artifactLocation": {
+                    "uri": "example/diagnostic_example.cc"
+                  },
+                  "replacements": [
+                    {
+                      "deletedRegion": {
+                        "charOffset": 4910,
+                        "charLength": 33
+                      },
+                      "insertedContent": {
+                        "text": "strlen_s(gpu_result.gpu_result.msg, <size of gpu_result.gpu_result.msg>)"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "description": {
+                "text": "If a string is missing a null terminator, strlen will read past the end of the buffer"
+              },
+              "artifactChanges": [
+                {
+                  "artifactLocation": {
+                    "uri": "example/diagnostic_example.cc"
+                  },
+                  "replacements": [
+                    {
+                      "deletedRegion": {
+                        "charOffset": 4910,
+                        "charLength": 33
+                      },
+                      "insertedContent": {
+                        "text": "strnlen(gpu_result.gpu_result.msg, <size of gpu_result.gpu_result.msg>)"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "properties": {
+            "DevSkimSeverity": "BestPractice",
+            "DevSkimConfidence": "High",
+            "tags": [
+              "API.DangerousAPI.ProblematicFunction"
+            ]
+          }
+        },
+        {
+          "ruleId": "glog-98453598-928c-4bfa-b733-90ac6556103c",
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Detected Vulnerability in C Function (strlen)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "rdci/src/RdciDiagSubSystem.cc"
+                },
+                "region": {
+                  "startLine": 179,
+                  "startColumn": 10,
+                  "endLine": 179,
+                  "endColumn": 43,
+                  "charOffset": 7301,
+                  "charLength": 33,
+                  "snippet": {
+                    "text": "strlen(gpu_result.gpu_result.msg)",
+                    "rendered": {
+                      "text": "strlen(gpu_result.gpu_result.msg)",
+                      "markdown": "`strlen(gpu_result.gpu_result.msg)`"
+                    }
+                  },
+                  "sourceLanguage": "cpp"
+                }
+              }
+            }
+          ],
+          "fixes": [
+            {
+              "description": {
+                "text": "If a string is missing a null terminator, strlen will read past the end of the buffer"
+              },
+              "artifactChanges": [
+                {
+                  "artifactLocation": {
+                    "uri": "rdci/src/RdciDiagSubSystem.cc"
+                  },
+                  "replacements": [
+                    {
+                      "deletedRegion": {
+                        "charOffset": 7301,
+                        "charLength": 33
+                      },
+                      "insertedContent": {
+                        "text": "strlen_s(gpu_result.gpu_result.msg, <size of gpu_result.gpu_result.msg>)"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "description": {
+                "text": "If a string is missing a null terminator, strlen will read past the end of the buffer"
+              },
+              "artifactChanges": [
+                {
+                  "artifactLocation": {
+                    "uri": "rdci/src/RdciDiagSubSystem.cc"
+                  },
+                  "replacements": [
+                    {
+                      "deletedRegion": {
+                        "charOffset": 7301,
+                        "charLength": 33
+                      },
+                      "insertedContent": {
+                        "text": "strnlen(gpu_result.gpu_result.msg, <size of gpu_result.gpu_result.msg>)"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "properties": {
+            "DevSkimSeverity": "BestPractice",
+            "DevSkimConfidence": "High",
+            "tags": [
+              "API.DangerousAPI.ProblematicFunction"
+            ]
+          }
+        },
+        {
+          "ruleId": "glog-324d7040-96f4-479a-8c61-0b44891258ca",
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Avoid Leaving Debug Code in Production"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "example/diagnostic_example.cc"
+                },
+                "region": {
+                  "startLine": 54,
+                  "startColumn": 27,
+                  "endLine": 54,
+                  "endColumn": 36,
+                  "charOffset": 2019,
+                  "charLength": 9,
+                  "snippet": {
+                    "text": "127.0.0.1",
+                    "rendered": {
+                      "text": "127.0.0.1",
+                      "markdown": "`127.0.0.1`"
+                    }
+                  },
+                  "sourceLanguage": "cpp"
+                }
+              }
+            }
+          ],
+          "properties": {
+            "DevSkimSeverity": "ManualReview",
+            "DevSkimConfidence": "High",
+            "tags": [
+              "Hygiene.Network.AccessingLocalhost"
+            ]
+          }
+        },
+        {
+          "ruleId": "glog-7967934a-ee3c-461f-952b-f35823656afc",
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Avoid Leaving Debug Code in Production"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "example/topologylink_example.cc"
+                },
+                "region": {
+                  "startLine": 40,
+                  "startColumn": 27,
+                  "endLine": 40,
+                  "endColumn": 36,
+                  "charOffset": 1573,
+                  "charLength": 9,
+                  "snippet": {
+                    "text": "localhost",
+                    "rendered": {
+                      "text": "localhost",
+                      "markdown": "`localhost`"
+                    }
+                  },
+                  "sourceLanguage": "cpp"
+                }
+              }
+            }
+          ],
+          "properties": {
+            "DevSkimSeverity": "ManualReview",
+            "DevSkimConfidence": "High",
+            "tags": [
+              "Hygiene.Network.AccessingLocalhost"
+            ]
+          }
+        },
+        {
+          "ruleId": "glog-011c070e-b3bc-4451-b997-5ba739771190",
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Avoid Leaving Debug Code in Production"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "example/policy_example.cc"
+                },
+                "region": {
+                  "startLine": 61,
+                  "startColumn": 27,
+                  "endLine": 61,
+                  "endColumn": 36,
+                  "charOffset": 2299,
+                  "charLength": 9,
+                  "snippet": {
+                    "text": "localhost",
+                    "rendered": {
+                      "text": "localhost",
+                      "markdown": "`localhost`"
+                    }
+                  },
+                  "sourceLanguage": "cpp"
+                }
+              }
+            }
+          ],
+          "properties": {
+            "DevSkimSeverity": "ManualReview",
+            "DevSkimConfidence": "High",
+            "tags": [
+              "Hygiene.Network.AccessingLocalhost"
+            ]
+          }
+        },
+        {
+          "ruleId": "glog-74fd2158-5ef6-4b89-8640-a019f3c16a6b",
+          "kind": "fail",
+          "level": "note",
+          "message": {
+            "text": "Avoid Leaving Debug Code in Production"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "example/health_example.cc"
+                },
+                "region": {
+                  "startLine": 230,
+                  "startColumn": 27,
+                  "endLine": 230,
+                  "endColumn": 36,
+                  "charOffset": 8000,
+                  "charLength": 9,
+                  "snippet": {
+                    "text": "127.0.0.1",
+                    "rendered": {
+                      "text": "127.0.0.1",
+                      "markdown": "`127.0.0.1`"
+                    }
+                  },
+                  "sourceLanguage": "cpp"
+                }
+              }
+            }
+          ],
+          "properties": {
+            "DevSkimSeverity": "ManualReview",
+            "DevSkimConfidence": "High",
+            "tags": [
+              "Hygiene.Network.AccessingLocalhost"
+            ]
+          }
+        },
+        {
+          "ruleId": "glog-8c175b13-e750-4d68-a2fa-bf8ac85883d8",
+          "kind": "fail",
+          "level": "error",
+          "message": {
+            "text": "\"Detected Use of Prohibited C Function (strncpy)\""
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "rdc_libs/bootstrap/src/RdcBootStrap.cc"
+                },
+                "region": {
+                  "startLine": 475,
+                  "startColumn": 2,
+                  "endLine": 475,
+                  "endColumn": 27,
+                  "charOffset": 16334,
+                  "charLength": 25,
+                  "snippet": {
+                    "text": "strncpy(dest, src, n - 1)",
+                    "rendered": {
+                      "text": "strncpy(dest, src, n - 1)",
+                      "markdown": "`strncpy(dest, src, n - 1)`"
+                    }
+                  },
+                  "sourceLanguage": "cpp"
+                }
+              }
+            }
+          ],
+          "fixes": [
+            {
+              "description": {
+                "text": "strncpy is dangerous, as if the source contains 'n' or more characters, it will not null terminate the destination."
+              },
+              "artifactChanges": [
+                {
+                  "artifactLocation": {
+                    "uri": "rdc_libs/bootstrap/src/RdcBootStrap.cc"
+                  },
+                  "replacements": [
+                    {
+                      "deletedRegion": {
+                        "charOffset": 16334,
+                        "charLength": 25
+                      },
+                      "insertedContent": {
+                        "text": "strcpy_s(dest,  n - 1,  src)"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "description": {
+                "text": "strncpy is dangerous, as if the source contains 'n' or more characters, it will not null terminate the destination."
+              },
+              "artifactChanges": [
+                {
+                  "artifactLocation": {
+                    "uri": "rdc_libs/bootstrap/src/RdcBootStrap.cc"
+                  },
+                  "replacements": [
+                    {
+                      "deletedRegion": {
+                        "charOffset": 16334,
+                        "charLength": 25
+                      },
+                      "insertedContent": {
+                        "text": "strlcpy(dest,  src,  n - 1)"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "properties": {
+            "DevSkimSeverity": "Important",
+            "DevSkimConfidence": "High",
+            "tags": [
+              "API.DangerousAPI.BannedFunction"
+            ]
+          }
+        }
+      ],
+      "newlineSequences": [
+        "\r\n",
+        "\n"
+      ]
+    }
+  ]
+}
